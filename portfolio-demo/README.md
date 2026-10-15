@@ -6,6 +6,7 @@ An interactive, local-preview mission-control dashboard for showcasing multi-age
 
 - Executive overview with service health, blockers, queued work, and live worker evidence
 - Kanban work control with task drawers, run history, event evidence, and `[user-input]` promotion to **Ready**
+- Command Center for creating a Ready task for a selected agent and continuing task conversations from one screen
 - Agent Fleet ordered by hierarchy: BigBoy, MiuMiu, managers, and specialists
 - Cron and schedule cards with editable demo fields, enable/disable behavior, and simulated run-now feedback
 - Memory search using seeded sample records

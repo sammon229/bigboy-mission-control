@@ -11,6 +11,7 @@ import copy
 import json
 import os
 import time
+import uuid
 from datetime import datetime, timedelta, timezone
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
@@ -161,6 +162,24 @@ def memory_payload(query):
     return {"query": query, "results": [x for x in MEMORIES if not query or query in (x["content"] + x["table"] + x["source"]).lower()]}
 
 
+def create_task(payload):
+    title = str(payload.get("title", "")).strip()
+    body = str(payload.get("body", "")).strip()
+    assignee = str(payload.get("assignee", "")).strip().lower()
+    try:
+        priority = max(0, min(100, int(payload.get("priority", 50))))
+    except (TypeError, ValueError):
+        priority = 50
+    allowed = {item[0] for item in AGENT_META if item[0] != "miumiu"}
+    if not title or len(title) > 180: return {"error": "title must be 1-180 characters"}, 400
+    if not body or len(body) > 12000: return {"error": "instruction must be 1-12000 characters"}, 400
+    if assignee not in allowed: return {"error": "choose a Hermes fleet agent for direct assignment"}, 400
+    task_id = "demo_req_" + uuid.uuid4().hex[:8]
+    item = task(task_id, title, body, assignee, "ready", priority)
+    TASKS.insert(0, item)
+    return {"ok": True, "taskId": task_id, "status": "ready", "task": copy.deepcopy(item)}, 201
+
+
 def task_detail(task_id):
     item = next((x for x in TASKS if x["id"] == task_id), None)
     if not item:
@@ -228,6 +247,11 @@ class Handler(BaseHTTPRequestHandler):
     def do_POST(self):
         parsed = urlparse(self.path)
         parts = parsed.path.strip("/").split("/")
+        if parsed.path == "/api/tasks":
+            try:
+                return self.send_json(*create_task(self._body()))
+            except (TypeError, ValueError, json.JSONDecodeError):
+                return self.send_json({"error": "invalid JSON"}, 400)
         if len(parts) == 5 and parts[:2] == ["api", "cron"] and parts[4] == "run":
             job = next((x for x in CRON_JOBS if x["profile"] == parts[2] and x["id"] == parts[3]), None)
             if not job: return self.send_json({"error": "demo cron job not found"}, 404)
