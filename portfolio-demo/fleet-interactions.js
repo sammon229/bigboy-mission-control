@@ -5,19 +5,28 @@
   online:'The orchestrator is reachable through Hermes or AI Share, but no active task evidence is present.',
     blocked:'The profile has open work classified as blocked and needs a decision or recovery.',
     ready:'The profile is configured and has assigned work, but no live run is currently verified.',
-    idle:'The profile is configured, with no open assignment or current runtime activity.'
+    idle:'The profile is configured, with no open assignment or current runtime activity.',
+    external:'An external orchestrator is visible in the system, but its active work is proven only through an AI Share task_id.'
   };
-  const keys=['working','online','blocked','ready','idle'];
+  const keys=['working','online','blocked','ready','idle','external'];
   function markExternalCards(){
     document.querySelectorAll('[data-agent="miumiu"] .agent-footer span:first-child').forEach(node=>{
       node.className='online-text';
       node.textContent='● AI Share external';
     });
   }
+  function applyFilter(){
+    const select=document.querySelector('#agent-status-filter');
+    if(!select)return;
+    document.querySelectorAll('#agent-grid .agent-card').forEach(card=>{
+      card.hidden=select.value!=='all'&&!card.classList.contains(select.value);
+    });
+  }
   function enhance(){
     const summary=document.querySelector('#agent-summary'),helpBox=document.querySelector('#agent-status-help'),select=document.querySelector('#agent-status-filter');
     if(!summary||!helpBox||!select||!summary.children.length)return;
     markExternalCards();
+    if(!select.dataset.filterBound){select.addEventListener('change',applyFilter);select.dataset.filterBound='1'}
     const selected=select.value;
     if(summary.querySelector('[data-agent-status]')){
       const active=summary.querySelector('.selected');
@@ -33,6 +42,7 @@
       ? '<b>Fleet status guide</b><span>Click a status to show only agents in that state. Click it again to return to all agents.</span>'
       : `<b>${selected.toUpperCase()}</b><span>${esc(help[selected])}</span>`;
     markExternalCards();
+    applyFilter();
   }
   document.addEventListener('click',e=>{
     const button=e.target.closest('[data-agent-status]');

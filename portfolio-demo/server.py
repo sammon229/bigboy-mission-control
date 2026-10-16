@@ -122,7 +122,7 @@ def agents_payload():
         blocked = [x for x in open_tasks if x["status"] == "blocked"]
         running = [x for x in open_tasks if x["status"] == "running"]
         jobs = [x for x in CRON_JOBS if x["profile"] == agent_id]
-        explicit = "online" if agent_id == "miumiu" else "working" if running else "blocked" if blocked else "ready" if open_tasks or jobs else "idle"
+        explicit = "external" if agent_id == "miumiu" else "working" if running else "blocked" if blocked else "ready" if open_tasks or jobs else "idle"
         result.append({
             "id": agent_id, "label": label, "mission": mission, "skills": skills, "memoryFiles": 3 if agent_id in ("bigboy", "nerdy") else 1,
             "hasSoul": True, "status": explicit, "statusReason": "Demo worker evidence is present" if running else "Needs operator decision" if blocked else "Assigned work is queued or scheduled" if open_tasks or jobs else "No open work or cron assignment",
@@ -131,9 +131,11 @@ def agents_payload():
             "currentTask": copy.deepcopy((running or open_tasks or [None])[0]), "workers": [{"taskId": "demo_001", "runId": 12}] if running else [], "cronJobs": copy.deepcopy(jobs), "cronCount": len(jobs), "enabledCronCount": len([x for x in jobs if x["enabled"]]),
             "sessions": [], "sessionCount": 0, "lastActivity": stamp(minutes_ago=4) if running else stamp(hours_ago=2) if owned else None,
             "external": agent_id == "miumiu", "reportsThrough": "AI Share" if agent_id == "miumiu" else None, "canonicalTaskKey": "task_id" if agent_id == "miumiu" else None,
+            "activityState": "AI Share lane available" if agent_id == "miumiu" else None,
+            "externalActivity": {"state": "available", "label": "No linked AI Share task", "detail": "MiuMiu is visible as the external engineering orchestrator; active work is proven through a canonical task_id."} if agent_id == "miumiu" else None,
             "hierarchyLevel": level, "hierarchyLabel": level_name, "reportsTo": reports_to,
         })
-    return {"agents": result, "gateway": {"state": "demo online", "servedProfiles": [x[0] for x in AGENT_META if x[0] != "miumiu"]}, "counts": {k: len([x for x in result if x["status"] == k]) for k in ("blocked", "working", "online", "ready", "idle")}}
+    return {"agents": result, "gateway": {"state": "demo online", "servedProfiles": [x[0] for x in AGENT_META if x[0] != "miumiu"]}, "counts": {k: len([x for x in result if x["status"] == k]) for k in ("blocked", "working", "online", "ready", "idle", "external")}}
 
 
 def cron_payload():
